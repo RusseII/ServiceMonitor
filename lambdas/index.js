@@ -8,10 +8,10 @@ const MONGODB_URI = process.env.RUSSELL_WORK_MONGODB_URI;
 let cachedDb = null;
 const timestamp = () => new Date().toString();
 
-const peterServer = 'https://thegates.online';
-const russellServer = 'https://russell.work';
+const peterServer2 = 'https://thegates.online';
+const russellServer2 = 'https://russell.work';
 
-let supportedServers = [peterServer, russellServer];
+let supportedServers = [peterServer2, russellServer2];
 
 async function connectToDatabase(uri) {
   console.log('=> connect to database');
@@ -56,7 +56,7 @@ const shouldSendAlert = async (db, onlineResults) => {
     supportedServers.map(async (server, i) => {
       let oldEvent = await db
         .collection('server_status')
-        .find({ server: russellServer })
+        .find({ server })
         .sort({ _id: -1 })
         .limit(1)
         .toArray();
@@ -64,9 +64,10 @@ const shouldSendAlert = async (db, onlineResults) => {
       oldEvent = oldEvent.length > 0 ? oldEvent[0] : null;
 
       if (oldEvent && oldEvent.isOnline !== onlineResults[i]) {
-        const text = `${russellServer} ${
+        const text = `${server} ${
           onlineResults[i] ? 'has come online!' : 'has gone offline.'
         }`;
+        console.log(oldEvent, onlineResults[i])
         sendTelegramMsg(text);
       }
       return Promise.resolve(oldEvent);
@@ -76,7 +77,7 @@ const shouldSendAlert = async (db, onlineResults) => {
 const renderBadge = (results, server) => {
   const badgeServer = results.find(s => s.server === server);
   if (!badgeServer) return null;
-  supportedServers = [badgeServer]
+  
   let badge;
 
   if (badgeServer.uptimePercent) {
@@ -112,6 +113,9 @@ const upTimeCalculation = async db => {
 const executeMongo = async (event, context, callback) => {
   // eslint-disable-next-line no-param-reassign
   context.callbackWaitsForEmptyEventLoop = false;
+  if (event.queryStringParameters && event.queryStringParameters.badge) {
+    supportedServers = [event.queryStringParameters.badge]
+  }
   const db = await connectToDatabase(MONGODB_URI);
 
   const onlineResponses = await Promise.all(
@@ -139,6 +143,7 @@ const executeMongo = async (event, context, callback) => {
     results = uptimeData.map((uptime, i) => ({ ...uptime, ...results[i] }));
   }
 
+ 
   if (event.queryStringParameters && event.queryStringParameters.badge) {
     const badge = renderBadge(results, event.queryStringParameters.badge);
     let badgeData;
@@ -157,6 +162,6 @@ const executeMongo = async (event, context, callback) => {
   callback(null, result);
 };
 
-// module.exports.handler = executeMongo;
+module.exports.handler = executeMongo;
 
-executeMongo({body: {city: 'Hammondsville', state: "Ohio"}}, {}, {})
+// executeMongo({body: {city: 'Hammondsville', state: "Ohio"}}, {}, {})
