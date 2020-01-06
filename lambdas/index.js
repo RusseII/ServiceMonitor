@@ -85,7 +85,7 @@ const renderBadge = (results, server) => {
       schemaVersion: 1,
       // eslint-disable-next-line no-useless-escape
       label: `${badgeServer.server.replace(/^https?\:\/\//i, '')} uptime`,
-      message: `${badgeServer.uptimePercent.toFixed(5)}%`,
+      message: `${badgeServer.uptimePercent.toFixed(7) * 100}%`,
       color: badgeServer.uptimePercent > 0.98 ? 'green' : 'orange',
     };
   } else {
