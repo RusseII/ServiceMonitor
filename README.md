@@ -15,11 +15,14 @@ Add `?uptimes=1` to return uptimes in result
 Example: [https://4mpgsamyqb.execute-api.us-east-1.amazonaws.com/server_status?uptimes=1](https://4mpgsamyqb.execute-api.us-east-1.amazonaws.com/server_status?uptimes=1)
 
 Create a badge for any site by passing in the domain name:
+
 ```https://img.shields.io/endpoint?url=https://4mpgsamyqb.execute-api.us-east-1.amazonaws.com/server_status?badge={domainName}```
 
-example1: `https://img.shields.io/endpoint?url=https://4mpgsamyqb.execute-api.us-east-1.amazonaws.com/server_status?badge=https://deephire.com`
+example1: 
+`https://img.shields.io/endpoint?url=https://4mpgsamyqb.execute-api.us-east-1.amazonaws.com/server_status?badge=https://deephire.com`
 
-example2: `https://img.shields.io/endpoint?url=https://4mpgsamyqb.execute-api.us-east-1.amazonaws.com/server_status?badge=https://iostexts.com`
+example2: 
+`https://img.shields.io/endpoint?url=https://4mpgsamyqb.execute-api.us-east-1.amazonaws.com/server_status?badge=https://iostexts.com`
 
 
 You need `RUSSELL_WORK_MONGODB_URI` env variable to store data in MongoDB
