@@ -11,8 +11,6 @@ const timestamp = () => new Date().toString();
 const peterServer = 'https://thegates.online';
 const russellServer = 'https://russell.work';
 
-// change it so everything uses this instead of the indivually defined stuff lmao
-// careful, order of these matter and are defined by the order below
 const supportedServers = [peterServer, russellServer];
 
 async function connectToDatabase(uri) {
@@ -34,7 +32,7 @@ async function queryDatabase(db, server, isOnline) {
 
   await db
     .collection('server_status')
-    .insert({ server, isOnline, timestamp: timestamp() })
+    .insertOne({ server, isOnline, timestamp: timestamp() })
     .catch(err => {
       console.log('=> an error occurred: ', err);
       return { statusCode: 500, body: 'error adding to mongodb' };
@@ -53,32 +51,27 @@ const sendTelegramMsg = async text => {
   if (resp.status !== 200) console.log(resp);
 };
 
-const shouldSendAlert = async (db, isRussellOnline, isPeterOnline) => {
-  let oldRussellEvent = await db
-    .collection('server_status')
-    .find({ server: russellServer })
-    .sort({ _id: -1 })
-    .limit(1)
-    .toArray();
-  oldRussellEvent = oldRussellEvent.length > 0 ? oldRussellEvent[0] : null;
+const shouldSendAlert = async (db, onlineResults) => {
+  return Promise.all(
+    supportedServers.map(async (server, i) => {
+      let oldEvent = await db
+        .collection('server_status')
+        .find({ server: russellServer })
+        .sort({ _id: -1 })
+        .limit(1)
+        .toArray();
+      // Promise.resolve(oldEvent);
+      oldEvent = oldEvent.length > 0 ? oldEvent[0] : null;
 
-  let oldPeterEvent = await db
-    .collection('server_status')
-    .find({ server: peterServer })
-    .sort({ _id: -1 })
-    .limit(1)
-    .toArray();
-  oldPeterEvent = oldPeterEvent.length > 0 ? oldPeterEvent[0] : null;
-  if (oldRussellEvent && oldRussellEvent.isOnline !== isRussellOnline) {
-    const text = `${russellServer} ${isRussellOnline ? 'has come online!' : 'has gone offline.'}`;
-    sendTelegramMsg(text);
-  }
-  if (oldPeterEvent && oldPeterEvent.isOnline !== isPeterOnline) {
-    const text = `${peterServer} ${
-      isPeterOnline ? 'has come online!' : 'has gone offline.'
-    }`;
-    sendTelegramMsg(text);
-  }
+      if (oldEvent && oldEvent.isOnline !== onlineResults[i]) {
+        const text = `${russellServer} ${
+          onlineResults[i] ? 'has come online!' : 'has gone offline.'
+        }`;
+        sendTelegramMsg(text);
+      }
+      return Promise.resolve(oldEvent);
+    })
+  );
 };
 const renderBadge = (results, server) => {
   const badgeServer = results.find(s => s.server === server);
@@ -88,14 +81,16 @@ const renderBadge = (results, server) => {
   if (badgeServer.uptimePercent) {
     badge = {
       schemaVersion: 1,
-      label: `${badgeServer.server.replace(/^https?\:\/\//i, "")} uptime`,
+      // eslint-disable-next-line no-useless-escape
+      label: `${badgeServer.server.replace(/^https?\:\/\//i, '')} uptime`,
       message: `${badgeServer.uptimePercent.toFixed(5)}%`,
       color: badgeServer.uptimePercent > 0.98 ? 'green' : 'orange',
     };
   } else {
     badge = {
       schemaVersion: 1,
-      label: badgeServer.server.replace(/^https?\:\/\//i, ""),
+      // eslint-disable-next-line no-useless-escape
+      label: badgeServer.server.replace(/^https?\:\/\//i, ''),
       message: badgeServer.isOnline ? 'Online' : 'Offline',
       color: badgeServer.isOnline ? 'green' : 'red',
     };
@@ -118,35 +113,25 @@ const executeMongo = async (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
   const db = await connectToDatabase(MONGODB_URI);
 
-  let isRussellOnline = false;
-  let isPeterOnline = false;
+  const onlineResponses = await Promise.all(
+    supportedServers.map(async server => {
+      return fetch(server, { timeout: 3000 }).catch(err => {
+        console.log(err);
+        return err
+      });
+    })
+  );
 
-  const pete = await fetch(peterServer, { timeout: 3000 }).catch(err => {
-    console.log(err);
-  });
-  const russell = await fetch(russellServer, { timeout: 1000 }).catch(err => {
-    console.log(err);
-  });
-  if (pete && pete.status >= 200 && pete.status < 300) {
-    isPeterOnline = true;
-  }
-  if (russell && russell.status >= 200 && russell.status < 300) {
-    isRussellOnline = true;
-  }
-
-  console.log('https://russell.work online?', isRussellOnline);
-  console.log('https://thegates.online online?', isPeterOnline);
-
-  await shouldSendAlert(db, isRussellOnline, isPeterOnline);
-  const peterResult = await queryDatabase(db, peterServer, isPeterOnline).catch(err => {
-    console.log('=> an error occurred: ', err);
-    callback(err);
-  });
-  const russellResult = await queryDatabase(db, russellServer, isRussellOnline).catch(err => {
-    console.log('=> an error occurred: ', err);
-    callback(err);
-  });
-  let results = [peterResult, russellResult];
+  const onlineResults = onlineResponses.map(r => Boolean(r && r.status >= 200 && r.status < 300));
+  await shouldSendAlert(db, onlineResults);
+  let results = await Promise.all(
+    supportedServers.map(async (server, i) =>
+      queryDatabase(db, server, onlineResults[i]).catch(err => {
+        console.log('=> an error occurred: ', err);
+        callback(err);
+      })
+    )
+  );
 
   if (event.queryStringParameters && event.queryStringParameters.uptimes === '1') {
     const uptimeData = await upTimeCalculation(db);
@@ -171,6 +156,6 @@ const executeMongo = async (event, context, callback) => {
   callback(null, result);
 };
 
-module.exports.handler = executeMongo;
+// module.exports.handler = executeMongo;
 
-// executeMongo({body: {city: 'Hammondsville', state: "Ohio"}}, {}, {})
+executeMongo({body: {city: 'Hammondsville', state: "Ohio"}}, {}, {})
