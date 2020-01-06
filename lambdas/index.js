@@ -74,7 +74,7 @@ const shouldSendAlert = async (db, isRussellOnline, isPeterOnline) => {
     sendTelegramMsg(text);
   }
   if (oldPeterEvent && oldPeterEvent.isOnline !== isPeterOnline) {
-    const text = `${peterServer} has gone ${
+    const text = `${peterServer} ${
       isPeterOnline ? 'has come online!' : 'has gone offline.'
     }`;
     sendTelegramMsg(text);
@@ -84,7 +84,7 @@ const renderBadge = (results, server) => {
   const badgeServer = results.find(s => s.server === server);
   if (!badgeServer) return null;
   let badge;
-  
+
   if (badgeServer.uptimePercent) {
     badge = {
       schemaVersion: 1,
