@@ -121,7 +121,7 @@ const executeMongo = async (event, context, callback) => {
   let isRussellOnline = false;
   let isPeterOnline = false;
 
-  const pete = await fetch(peterServer, { timeout: 1000 }).catch(err => {
+  const pete = await fetch(peterServer, { timeout: 3000 }).catch(err => {
     console.log(err);
   });
   const russell = await fetch(russellServer, { timeout: 1000 }).catch(err => {
