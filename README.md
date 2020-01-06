@@ -1,6 +1,6 @@
 # ServiceMonitor
 [![thegates.online](https://img.shields.io/endpoint?url=https%3A%2F%2F4mpgsamyqb.execute-api.us-east-1.amazonaws.com%2Fserver_status%3Fbadge%3Dhttps%3A%2F%2Fthegates.online)](https://thegates.online)
-[![thegates.online](https://img.shields.io/endpoint?url=https%3A%2F%2F4mpgsamyqb.execute-api.us-east-1.amazonaws.com%2Fserver_status%3Fuptimes%3D1%26badge%3Dhttps%3A%2F%2Frussell.online)](https://thegates.online)
+[![thegates.online](https://img.shields.io/endpoint?url=https%3A%2F%2F4mpgsamyqb.execute-api.us-east-1.amazonaws.com%2Fserver_status%3Fuptimes%3D1%26badge%3Dhttps%3A%2F%2Fthegates.online)](https://thegates.online)
 
 [![russell.work](https://img.shields.io/endpoint?url=https%3A%2F%2F4mpgsamyqb.execute-api.us-east-1.amazonaws.com%2Fserver_status%3Fbadge%3Dhttps%3A%2F%2Frussell.work)](https://russell.work)
 [![russell.work](https://img.shields.io/endpoint?url=https%3A%2F%2F4mpgsamyqb.execute-api.us-east-1.amazonaws.com%2Fserver_status%3Fuptimes%3D1%26badge%3Dhttps%3A%2F%2Frussell.work)](https://russell.work)
