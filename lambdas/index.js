@@ -11,7 +11,7 @@ const timestamp = () => new Date().toString();
 const peterServer = 'https://thegates.online';
 const russellServer = 'https://russell.work';
 
-const supportedServers = [peterServer, russellServer];
+let supportedServers = [peterServer, russellServer];
 
 async function connectToDatabase(uri) {
   console.log('=> connect to database');
@@ -76,6 +76,7 @@ const shouldSendAlert = async (db, onlineResults) => {
 const renderBadge = (results, server) => {
   const badgeServer = results.find(s => s.server === server);
   if (!badgeServer) return null;
+  supportedServers = [badgeServer]
   let badge;
 
   if (badgeServer.uptimePercent) {
