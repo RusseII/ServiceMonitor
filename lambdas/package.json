@@ -1,0 +1,10 @@
+{
+    "scripts": {
+        "test": "node index.js",
+        "deploy": "zip -r lambdaFunc.zip . && aws lambda update-function-code --function-name ServiceMonitor --region us-east-1 --zip-file fileb://./lambdaFunc.zip"
+    },
+    "dependencies": {
+        "mongodb": "^3.4.1",
+        "node-fetch": "^2.6.0"
+    }
+}
