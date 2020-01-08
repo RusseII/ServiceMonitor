@@ -11,7 +11,14 @@ const timestamp = () => new Date().toString();
 const peterServer2 = 'https://thegates.online';
 const russellServer2 = 'https://russell.work';
 
+
 let supportedServers = [peterServer2, russellServer2];
+const serverNotifications = [peterServer2, russellServer2]
+
+
+function findCommonElements(arr1, arr2) {
+  return arr1.some(item => arr2.includes(item))
+}
 
 async function connectToDatabase(uri) {
   console.log('=> connect to database');
@@ -52,32 +59,36 @@ const sendTelegramMsg = async text => {
 };
 
 const shouldSendAlert = async (db, onlineResults) => {
-  return Promise.all(
-    supportedServers.map(async (server, i) => {
-      let oldEvent = await db
-        .collection('server_status')
-        .find({ server })
-        .sort({ _id: -1 })
-        .limit(1)
-        .toArray();
-      // Promise.resolve(oldEvent);
-      oldEvent = oldEvent.length > 0 ? oldEvent[0] : null;
 
-      if (oldEvent && oldEvent.isOnline !== onlineResults[i]) {
-        const text = `${server} ${
-          onlineResults[i] ? 'has come online!' : 'has gone offline.'
-        }`;
-        console.log(oldEvent, onlineResults[i])
-        sendTelegramMsg(text);
-      }
-      return Promise.resolve(oldEvent);
-    })
-  );
+  if (findCommonElements(supportedServers, serverNotifications)) {
+
+    return Promise.all(
+      supportedServers.map(async (server, i) => {
+        let oldEvent = await db
+          .collection('server_status')
+          .find({ server })
+          .sort({ _id: -1 })
+          .limit(1)
+          .toArray();
+        // Promise.resolve(oldEvent);
+        oldEvent = oldEvent.length > 0 ? oldEvent[0] : null;
+
+        if (oldEvent && oldEvent.isOnline !== onlineResults[i]) {
+          const text = `${server} ${
+            onlineResults[i] ? 'has come online!' : 'has gone offline.'
+            }`;
+          console.log(oldEvent, onlineResults[i])
+          sendTelegramMsg(text);
+        }
+        return Promise.resolve(oldEvent);
+      })
+    );
+  }
 };
 const renderBadge = (results, server) => {
   const badgeServer = results.find(s => s.server === server);
   if (!badgeServer) return null;
-  
+
   let badge;
 
   if (badgeServer.uptimePercent) {
@@ -86,7 +97,7 @@ const renderBadge = (results, server) => {
       // eslint-disable-next-line no-useless-escape
       label: `${badgeServer.server.replace(/^https?\:\/\//i, '')} uptime`,
       message: `${badgeServer.uptimePercent.toFixed(7) * 100}%`,
-      color: badgeServer.uptimePercent > 0.98 ? 'green' : 'orange',
+      color: badgeServer.uptimePercent > 0.98 ? 'success' : badgeServer.uptimePercent > 0.90 ? 'important' : 'critical',
     };
   } else {
     badge = {
@@ -94,7 +105,7 @@ const renderBadge = (results, server) => {
       // eslint-disable-next-line no-useless-escape
       label: badgeServer.server.replace(/^https?\:\/\//i, ''),
       message: badgeServer.isOnline ? 'Online' : 'Offline',
-      color: badgeServer.isOnline ? 'green' : 'red',
+      color: badgeServer.isOnline ? 'success' : 'critical',
     };
   }
   return badge;
@@ -143,7 +154,7 @@ const executeMongo = async (event, context, callback) => {
     results = uptimeData.map((uptime, i) => ({ ...uptime, ...results[i] }));
   }
 
- 
+
   if (event.queryStringParameters && event.queryStringParameters.badge) {
     const badge = renderBadge(results, event.queryStringParameters.badge);
     let badgeData;
