@@ -16,8 +16,8 @@ let supportedServers = [peterServer2, russellServer2];
 const serverNotifications = [peterServer2, russellServer2]
 
 
-function findCommonElements(arr1, arr2) {
-  return arr1.some(item => arr2.includes(item))
+function findCommonElements(currentServer, supported) {
+  return supported.includes(currentServer);
 }
 
 async function connectToDatabase(uri) {
@@ -60,10 +60,11 @@ const sendTelegramMsg = async text => {
 
 const shouldSendAlert = async (db, onlineResults) => {
 
-  if (findCommonElements(supportedServers, serverNotifications)) {
+
 
     return Promise.all(
       supportedServers.map(async (server, i) => {
+        if (findCommonElements(server, serverNotifications)) {
         let oldEvent = await db
           .collection('server_status')
           .find({ server })
@@ -81,9 +82,9 @@ const shouldSendAlert = async (db, onlineResults) => {
           sendTelegramMsg(text);
         }
         return Promise.resolve(oldEvent);
+      }
       })
     );
-  }
 };
 const renderBadge = (results, server) => {
   const badgeServer = results.find(s => s.server === server);
